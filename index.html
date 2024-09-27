@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토마토김밥(중동점) QR결제</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.8;
+            margin: 0;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #b5042a;
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #555;
+        }
+        #amount-input {
+            width: calc(100% - 30px);
+            padding: 15px;
+            font-size: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        #amount-input::placeholder {
+            color: #999;
+        }
+        #amount-input::placeholder strong {
+            color: #777;
+            font-weight: normal;
+        }
+        #amount-input:focus {
+            outline: none;
+            border-color: #b5042a;
+            box-shadow: 0 0 10px rgba(181, 4, 42, 0.2);
+        }
+        #update-amount, #change-amount {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+        }
+        #update-amount.set-amount {
+            background-color: #4a90e2;
+            animation: none;
+        }
+        
+        @keyframes ellipsis {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
+        #update-amount.transferring::after {
+            content: '';
+            animation: ellipsis 1.5s infinite;
+        }
+        
+        #update-amount.transfer {
+            background-color: #b5042a;
+            animation: pulse-sparkle 1.5s infinite;
+        }
+        
+        #update-amount.transferring {
+            background-color: #8c0321;
+            animation: none;
+        }
+        #change-amount {
+            width: 50%;
+            margin-top: 20px;
+            background-color: #b5042a;
+            animation: pulse-subtle 1s infinite alternate;
+            position: relative;
+            z-index: 11;
+            pointer-events: auto;
+        }
+        @keyframes pulse-sparkle {
+            0% { box-shadow: 0 0 0 0 rgba(181, 4, 42, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(181, 4, 42, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(181, 4, 42, 0); }
+        }
+        @keyframes pulse-subtle {
+            0% { background-color: #b5042a; }
+            100% { background-color: #d4143c; }
+        }
+        #aqr-widget-area {
+            margin-top: 30px;
+            transition: opacity 0.5s ease;
+            position: relative;
+            z-index: 20;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        .fade-out {
+            animation: fadeOut 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .disabled-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        body.disabled .disabled-overlay {
+            opacity: 1;
+        }
+        .highlight-container, .bank_info-container {
+            text-align: center;
+        }
+      
+        .bank_info {
+            display: inline-flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #02446e;
+            justify-content: center;
+        }
+
+        .bank_logo {
+            width: 20px;
+            height: auto;
+            margin-right: 5px;
+        }
+
+        .highlight {
+            font-weight: bold;
+            font-size: 32px;
+            color: rgba(0, 0, 0, 0.9);
+        }
+        .amount-label {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #555;
+        }
+        #amount-input {
+            width: calc(100% - 30px);
+            padding: 15px;
+            font-size: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="disabled-overlay"></div>
+    <div class="container">
+        <h1>토마토김밥(중동점) QR결제</h1>
+        <div id="input-area">
+            <label for="amount-input">
+                <div class="highlight-container">
+                    <p><span class="highlight">예금주 남경애</span></p>
+                </div>
+                <div class="bank_info-container">
+                    <p class="bank_info">
+                        <img src="images/bank_logo.png" alt="IBK 기업은행 로고" class="bank_logo">
+                        <span>기업은행</span>
+                    </p>
+                </div>
+                <span>계좌이체는 사용하시는 은행앱에서 이루어집니다.</span>
+            </label>
+            <input type="text" id="amount-input" inputmode="numeric" placeholder="이체 금액 입력 (숫자만 가능)">
+            <button id="update-amount" class="set-amount">금액 설정</button>
+        </div>
+
+        <div id="aqr-widget-area"></div>
+        <button id="change-amount" style="display: none;">금액 변경</button>
+    </div>
+
+    <script src="https://aq.gy/c/widget.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <script>
+    // 주의: 실제 토큰과 레이어 ID를 여기에 하드코딩하는 것은 보안상 위험할 수 있습니다.
+    // 가능하다면 더 안전한 방법을 고려해보세요.
+    const TOKEN = "yawY6";
+    const LAYER_ID = "aqr-widget-area";
+    let aqrWidget = null;
+    const amountInput = document.getElementById('amount-input');
+    const updateButton = document.getElementById('update-amount');
+    const changeAmountButton = document.getElementById('change-amount');
+    const widgetArea = document.getElementById('aqr-widget-area');
+
+    new Cleave(amountInput, {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralPositiveOnly: true,
+        numeralIntegerScale: 9,
+        numeralDecimalScale: 0
+    });
+
+    amountInput.addEventListener('input', function() {
+        const amount = parseInt(this.value.replace(/,/g, ''));
+        if (amount >= 100) {
+            updateButton.textContent = '앱 열기';
+            updateButton.classList.remove('set-amount');
+            updateButton.classList.add('transfer');
+        } else {
+            updateButton.textContent = '금액 설정';
+            updateButton.classList.add('set-amount');
+            updateButton.classList.remove('transfer');
+        }
+    });
+
+    updateButton.addEventListener('click', function() {
+        const amount = parseInt(amountInput.value.replace(/,/g, ''));
+        if (amount && amount >= 100) {
+            if (!aqrWidget) {
+                createWidget(amount);
+                disableInputs();
+                updateButton.textContent = '앱여는중';
+                updateButton.classList.remove('transfer');
+                updateButton.classList.add('transferring');
+            }
+        } else {
+            alert('100원 이상의 올바른 결제 금액을 입력해주세요.');
+        }
+    });
+
+    changeAmountButton.addEventListener('click', function() {
+        if (confirm('금액을 변경하실 건가요?')) {
+            resetWidget();
+        }
+    });
+
+    function createWidget(amount) {
+        aqrWidget = new AQRWidget().renderAQRWidget({
+            token: TOKEN,
+            layer_id: LAYER_ID,
+            profile: true,
+            libbutton: true,
+            bgcolor: "#b5042a",
+            textcolor: "#ffffff",
+            bgimage: "https://example.com/background.png",
+            bgimage_size: "cover",
+            bgimage_repeat: "no-repeat",
+            bgimage_position: "center",
+            button_text: "지금 송금하기",
+            amount: amount
+        });
+        widgetArea.classList.add('fade-in');
+        changeAmountButton.classList.add('fade-in');
+        changeAmountButton.style.display = 'inline-block';
+    }
+
+    function disableInputs() {
+        document.body.classList.add('disabled');
+        amountInput.disabled = true;
+        updateButton.disabled = true;
+    }
+
+    function resetWidget() {
+        if (aqrWidget) {
+            aqrWidget.destroy();
+            aqrWidget = null;
+        }
+        widgetArea.innerHTML = '';
+        widgetArea.classList.remove('fade-in');
+        widgetArea.classList.add('fade-out');
+        changeAmountButton.classList.remove('fade-in');
+        changeAmountButton.classList.add('fade-out');
+        
+        setTimeout(() => {
+            widgetArea.classList.remove('fade-out');
+            changeAmountButton.classList.remove('fade-out');
+            changeAmountButton.style.display = 'none';
+            
+            document.body.classList.remove('disabled');
+            amountInput.disabled = false;
+            updateButton.disabled = false;
+            amountInput.value = '';
+            updateButton.textContent = '금액 설정';
+            updateButton.classList.add('set-amount');
+            updateButton.classList.remove('transfer', 'transferring');
+            
+            amountInput.classList.add('fade-in');
+            updateButton.classList.add('fade-in');
+            
+            setTimeout(() => {
+                amountInput.classList.remove('fade-in');
+                updateButton.classList.remove('fade-in');
+            }, 500);
+        }, 500);
+    }
+    </script>
+</body>
+</html>
