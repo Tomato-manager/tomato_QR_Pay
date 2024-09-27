@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>토마토김밥(중동점) QR결제</title>
     <style>
         body {
@@ -23,11 +24,21 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #b5042a;
-            margin-bottom: 30px;
-            font-size: 32px;
-            font-weight: 700;
-        }
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.logo-icon {
+			display: inline-block;
+			width: 40px; /* 이미지 크기 조정 */
+			height: 40px;
+			background-image: url('images/logo.png');
+			background-size: contain;
+			background-repeat: no-repeat;
+			margin-right: 10px; /* 이미지와 텍스트 사이 간격 */
+			vertical-align: middle;
+		}
         p {
             font-size: 18px;
             margin-bottom: 30px;
@@ -186,7 +197,10 @@
 <body>
     <div class="disabled-overlay"></div>
     <div class="container">
-        <h1>토마토김밥(중동점) QR결제</h1>
+        <h1>
+			<span class="logo-icon"></span>
+			토마토김밥(중동점) QR결제
+		</h1>
         <div id="input-area">
             <label for="amount-input">
                 <div class="highlight-container">
